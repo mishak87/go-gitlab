@@ -6,7 +6,11 @@
 
 package gitlab
 
-import "fmt"
+import (
+	"fmt"
+
+	qs "github.com/google/go-querystring/query"
+)
 
 // ProjectsService handles communication with the project related
 // methods of the GitLab API.
@@ -64,26 +68,32 @@ func (p Project) String() string {
 // repositories for the authenticated user.
 //
 // GitLab API docs: http://doc.gitlab.com/ce/api/projects.html#list-projects
-func (s *ProjectsService) List() ([]Project, *Response, error) {
-	return s.list("projects")
+func (s *ProjectsService) List(opt *ListOptions) ([]Project, *Response, error) {
+	return s.list("projects", opt)
 }
 
 // ListOwned lists all GitLab projects that are owned by the user.
 //
 // GitLab API docs: http://doc.gitlab.com/ce/api/projects.html#list-owned-projects
-func (s *ProjectsService) ListOwned() ([]Project, *Response, error) {
-	return s.list("projects/owned")
+func (s *ProjectsService) ListOwned(opt *ListOptions) ([]Project, *Response, error) {
+	return s.list("projects/owned", opt)
 }
 
 // ListAll lists all GitLab projects. For admins only.
 //
 // GitLab API docs: http://doc.gitlab.com/ce/api/projects.html#list-all-projects
-func (s *ProjectsService) ListAll() ([]Project, *Response, error) {
-	return s.list("projects/all")
+func (s *ProjectsService) ListAll(opt *ListOptions) ([]Project, *Response, error) {
+	return s.list("projects/all", opt)
 }
 
 // Helper function for list functions
-func (s *ProjectsService) list(u string) ([]Project, *Response, error) {
+func (s *ProjectsService) list(listType string, opt *ListOptions) ([]Project, *Response, error) {
+	params, err := qs.Values(opt)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	u := fmt.Sprintf("%s?%s", listType, params.Encode())
 	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, nil, err
